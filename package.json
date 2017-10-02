@@ -12,6 +12,7 @@
     "nodemon": "^1.12.1"
   },
   "dependencies": {
-    "express": "^4.16.1"
+    "express": "^4.16.1",
+    "sha256": "^0.2.0"
   }
 }

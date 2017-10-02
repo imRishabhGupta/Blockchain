@@ -6,7 +6,6 @@ module.exports = class Block {
         this.proof = proof;
         this.timestamp = timestamp;
         this.data = data;
-        this.hash = this.calculateHash();
     }
 
 }

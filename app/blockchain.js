@@ -1,42 +1,61 @@
-const SHA256 = require("js-sha256");
+const SHA256 = require("crypto-js/sha256");
 
-module.exports = class Blockchain{
+var Block = require('./model/block')
 
-	constructor() {
-		this.chain = [];
-		this.newBlock(100, 1);
+var chain = [];
+var currentTransactions= [];
+
+var newTransaction = function(sender, recipient, amount) {
+
+	currentTransactions.push({
+		'sender': sender,
+		'recipient': recipient,
+		'amount': amount
+	});
+
+	return lastBlock() + 1;
+}
+
+var newBlock = function(proof, previousHash) {
+
+	var d = new Date();
+	var block = new Block(chain.length, d.getTime(), currentTransactions, proof, previousHash);
+	currentTransactions = [];
+	chain.push(block);
+	return block;
+ 
+};
+
+exports.test = function(req, res) {
+	var d = new Date();
+	var block = new Block("this.chain.length", d.getTime(), "this.currentTransactions", 55, "rvdr");
+	console.log(calculateHash(block));
+	chain.push(block);
+	console.log(chain.length);
+	res.json(block);
+};	
+
+var lastBlock = function() {
+	return chain.length - 1;
+}
+
+var calculateHash = function(block) {
+    return SHA256( JSON.stringify(block) ).toString();
+}
+
+var proofOfWork = function(lastProof) {
+	proof = 0;
+	while(validProof(lastProof, proof) != false) {
+		proof++;
 	}
+	return proof;
 
-	newTransaction(sender, recipient, amount) {
+}
 
-		this.currentTransactions.push({
-			'sender': sender;
-			'recipient': recipient;
-			'amount': amount;
-		});
+var validProof = function(lastProof, proof) {
 
-		return lastBlock() + 1;
-	}
-
-	newBlock(proof, previousHash) {
-
-		var block = new Block(this.chain.length, time(), this.currentTransactions, proof, previousHash);
-		this.currentTransactions = [];
-		this.chain.push(block);
-		return block;
-
-	}
-
-	lastBlock() {
-		return this.chain.length - 1;
-	}
-
-    calculateHash(block) {
-
-        var sha = SHA256.create();
-    	sha.update( JSON.stringify(block) );
-    	return sha.hex();
-
-    }
+	var guess = lastProof.toString() + proof.toString();
+	guessHash = SHA256(guess).toString();
+	return guessHash.substring(-4, 0) == "0000";
 
 }
