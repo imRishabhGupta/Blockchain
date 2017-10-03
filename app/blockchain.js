@@ -1,9 +1,11 @@
 const SHA256 = require("crypto-js/sha256");
-
-var Block = require('./model/block')
+var Set = require("collections/set");
+var Block = require('./model/block');
+var request = require('request');
 
 var chain = [];
-var currentTransactions= [];
+var currentTransactions = [];
+var nodes = new Set();
 
 var init = function() {
 	
@@ -11,10 +13,27 @@ var init = function() {
 	newBlock(100, 1);
 	currentTransactions = [];
 
-}
+};
+
+var registerNode = function(req) {
+	//nodes.add(req.connection.remoteAddress);
+	nodes.add(req.get('host'));
+};
+
+exports.registerNodes = function(req, res) {
+	
+	var body = req.body;
+	if(!body.nodes){
+		res.status(400).json({success: false, message: "Could not add new nodes."})
+	}
+	newNodes = body.nodes;
+	for(i=0;i<newNodes.length;i++)
+		nodes.add(newNodes[i]);
+
+	res.status(200).json({success: true, message: "New nodes addes."});
+};
 
 exports.newTransaction = function(req, res) {
-
 
 	if(chain.length == 0)
 		init();
@@ -25,10 +44,13 @@ exports.newTransaction = function(req, res) {
 		res.status(400).json({success: false, message: "Please enter information."})
 	}
 
+	console.log(req.connection.remoteAddress);
+	console.log(req.get('host'));
+
 	addTransaction(body.sender, body.recipient, body.amount);
 
     res.status(200).json({success: true, message: "Correct information."});
-}
+};
 
 var addTransaction = function(sender, recipient, amount) {
 	currentTransactions.push({
@@ -36,7 +58,7 @@ var addTransaction = function(sender, recipient, amount) {
 		'recipient': recipient,
 		'amount': amount
 	});
-}
+};
 
 exports.mine = function (req, res) {
 
@@ -52,7 +74,7 @@ exports.mine = function (req, res) {
 		proof: block.proof,
 		previousHash: block.previousHash
 	});
-}
+};
 
 var newBlock = function(proof, previousHash) {
 
@@ -64,20 +86,34 @@ var newBlock = function(proof, previousHash) {
  
 };
 
-exports.test = function(req, res) {
+exports.getChain = function(req, res) {
 	
-	res.json(chain);
+	res.status(200).json({
+		chain: chain,
+		length: chain.length
+	});
 };	
 
-validChain = function() {
+exports.consensus = function(req, res) {
+	replaced = resolveConflicts();
+	if(replaced == true){
+		res.status(200).json({success: true, message: "Blockchain was replaced.", newChain: chain});
+	}
+	else{
+		res.status(400).json({success: false, message: "Our chain is authoritative."});
+	}
 
-	var prev = chain[0];
+};
+
+var validChain = function(newChain) {
+
+	var prev = newChain[0];
 	var i = 1;
 
-	while(i < chain.length) {
+	while(i < newChain.length) {
 
 		var prevHash = calculateHash(prev);
-		var currBlock = chain[i];
+		var currBlock = newChain[i];
 
 		if(prevHash!=currBlock.previousHash)
 			return false;
@@ -88,15 +124,41 @@ validChain = function() {
 		i++;
 	}
 	return true;
-}
+};
+
+var resolveConflicts = function() {
+
+	maxLen = nodes.length;
+
+	newChain = null;
+
+	for(i=0;i<nodes.length;i++){
+		request('http://' + nodes[i] + '/chain', function (error, response, body) {
+			if(!response.length || !response.chain){
+				return false;
+			}
+			if(response.length > maxLen && validChain(response.chain)){
+				maxLen = response.length;
+				newChain = response.chain;
+			}
+
+		});
+	}
+	if(newChain != null){
+		chain = newChain;
+		return true;
+	}
+	return false;
+
+};
 
 var lastBlock = function() {
 	return (chain.length - 1);
-}
+};
 
 var calculateHash = function(block) {
     return SHA256( JSON.stringify(block) ).toString();
-}
+};
 
 var proofOfWork = function(lastProof) {
 	proof = 0;
@@ -106,7 +168,7 @@ var proofOfWork = function(lastProof) {
 	}
 	return proof;
 
-}
+};
 
 var validProof = function(lastProof, proof) {
 
@@ -114,4 +176,4 @@ var validProof = function(lastProof, proof) {
 	guessHash = SHA256(guess).toString();
 	return guessHash[guessHash.length-1] == '0';
 
-}
+};

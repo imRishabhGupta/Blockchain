@@ -12,7 +12,9 @@
     "nodemon": "^1.12.1"
   },
   "dependencies": {
+    "collections": "^5.0.7",
     "express": "^4.16.1",
+    "request": "^2.83.0",
     "sha256": "^0.2.0"
   }
 }
