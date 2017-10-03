@@ -10,4 +10,10 @@ module.exports = function(app) {
   app.route('/test')
   	.get(blockchain.test);
 
+  app.route('/transactions/new')
+  	.post(blockchain.newTransaction);
+
+  app.route('/mine')
+  	.get(blockchain.mine);
+
 };
