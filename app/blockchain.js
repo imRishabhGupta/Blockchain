@@ -44,9 +44,6 @@ exports.newTransaction = function(req, res) {
 		res.status(400).json({success: false, message: "Please enter information."})
 	}
 
-	console.log(req.connection.remoteAddress);
-	console.log(req.get('host'));
-
 	addTransaction(body.sender, body.recipient, body.amount);
 
     res.status(200).json({success: true, message: "Correct information."});
@@ -132,14 +129,18 @@ var resolveConflicts = function() {
 
 	newChain = null;
 
-	for(i=0;i<nodes.length;i++){
-		request('http://' + nodes[i] + '/chain', function (error, response, body) {
-			if(!response.length || !response.chain){
+	for(let node of nodes){
+		request('http://' + node + '/chain', function (error, response, body) {
+
+			body = JSON.parse(body);
+
+			if(!body || !body.length || !body.chain){
 				return false;
 			}
-			if(response.length > maxLen && validChain(response.chain)){
-				maxLen = response.length;
-				newChain = response.chain;
+
+			if(body.length > maxLen && validChain(body.chain)){
+				maxLen = body.length;
+				newChain = body.chain;
 			}
 
 		});
