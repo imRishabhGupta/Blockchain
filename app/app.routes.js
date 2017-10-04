@@ -1,10 +1,6 @@
 'use strict';
 module.exports = function(app) {
-  var controller = require('./app.controller');
   var blockchain = require('./blockchain');
-
-  app.route('/transactions')
-    .get(controller.listAllTransactions);
 
   app.route('/chain')
   	.get(blockchain.getChain);
