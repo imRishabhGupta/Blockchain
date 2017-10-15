@@ -3,7 +3,8 @@
 
 It's nothing but a public database that consists out of blocks that anyone can read. But, they do have an interesting property: they are immutable. Once a block has been added to the chain, it cannot be changed anymore without invalidating the rest of the chain.
 
-This repository contains the code for basic prototype of blockchain. It implements basic concepts of blockchain like proof-of-work (POW), consensus algorithm, registry of new nodes and many more. This repository contains the api with the required functions for the implementation of blockchain. Note, it doesn't contain the UI for adding transaction or mining the block.
+This repository contains the code for basic prototype of blockchain. It implements basic concepts of blockchain like proof-of-work (POW), consensus algorithm, registering new nodes and many more. This repository serves as the api with the basic required functions for the implementation of blockchain. We can use the api to add transactions and mine the block.
+Note, it doesn't contain the UI for adding transaction or mining the block.
 
 Now, we can start with how this blockchain works. 
 
